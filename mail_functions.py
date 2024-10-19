@@ -1,27 +1,46 @@
+import threading
+from functools import wraps
 from simplegmail import Gmail
 from groq import Groq
 import json
 from dotenv import load_dotenv
 import os
+from datetime import datetime
+import threading
+from functools import wraps
+from chroma import search_mail_history
 
 load_dotenv()
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 model = 'llama3-groq-70b-8192-tool-use-preview'
 gmail = Gmail(client_secret_file="./auth/cyprien_credentials.json", creds_file="./auth/gmail_token.json") 
 
+def timeout(seconds):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            result = []
+            exception = []
+            def target():
+                try:
+                    res = func(*args, **kwargs)
+                    result.append(res)
+                except Exception as e:
+                    exception.append(e)
+
+            thread = threading.Thread(target=target, daemon=True) 
+            thread.start()
+            thread.join(seconds)
+            if thread.is_alive():
+                print(f"Function '{func.__name__}' execution timed out after {seconds} seconds")
+                return "Too many messages"
+            if exception:
+                raise exception[0]
+            return result[0]
+        return wrapper
+    return decorator
+
 def send_message(to, subject, msg_html, msg_plain):
-    """
-    Sends an email message using the Gmail API.
-
-    Args:
-        to (str): Recipient's email address.
-        subject (str): Subject of the email.
-        msg_html (str): HTML content of the email.
-        msg_plain (str): Plain text content of the email.
-
-    Returns:
-        None
-    """
     gmail.send_message(
         to=to,
         sender="lauciannailo123@gmail.com",
@@ -29,88 +48,85 @@ def send_message(to, subject, msg_html, msg_plain):
         msg_html=msg_html,
         msg_plain=msg_plain
     )
-    print("✅ Email sent")
+    output = f"New email sent! To: {to}, Subject: {subject}, HTML: {msg_html}, Plain: {msg_plain}"
+    print(output)
+    return output
 
+@timeout(10)
 def search_sent_inbox(query):
-    """
-    Searches the sent messages in your Gmail account based on a query.
-
-    Args:
-        query (str): Search query for sent messages.
-
-    Returns:
-        None
-    """
     messages = gmail.get_sent_messages(query=query)
-    for message in messages:
-        print("To: " + message.recipient)
-        print("From: " + message.sender)
-        print("Subject: " + message.subject)
-        print("Date: " + str(message.date))
+    top_ten = []
+    if len(messages) == 0:
+        output = f"No messages found when searching for {query} in sent messages!"
+        print(output)
+        return output
+    for message in messages[:10]:
         if message.snippet:
-            print("Preview: " + message.snippet)
-        if message.plain:
-            print("Message Body: " + message.plain)
-    print(f"✅ Found {len(messages)} sent messages")
+            output = (f"To: {message.recipient}, From: {message.sender}, "
+                      f"Subject: {message.subject}, Date: {str(message.date)}, "
+                      f"Preview: {message.snippet}")
+            top_ten.append(output)
+        elif message.plain:
+            output = (f"To: {message.recipient}, From: {message.sender}, "
+                      f"Subject: {message.subject}, Date: {str(message.date)} "
+                      f"Message Body: {message.plain}")
+            top_ten.append(output)
+    output = f"Found {len(messages)} sent messages when searching for {query}! Here's the 10 most recent:\n" + "\n".join(top_ten)   
+    print(output)
+    return output
 
+@timeout(10)
 def search_unread_inbox(query):
-    """
-    Searches the unread messages in your Gmail inbox based on a query.
-
-    Args:
-        query (str): Search query for unread messages.
-
-    Returns:
-        None
-    """
     messages = gmail.get_unread_inbox(query=query)
-    for message in messages:
-        print("To: " + message.recipient)
-        print("From: " + message.sender)
-        print("Subject: " + message.subject)
-        print("Date: " + str(message.date))
+    top_ten = []
+    if len(messages) == 0:
+        output = f"No messages found when searching for {query} in the unread inbox!"
+        print(output)
+        return output
+    for message in messages[:10]:
         if message.snippet:
-            print("Preview: " + message.snippet)
-        if message.plain:
-            print("Message Body: " + message.plain)
-    print(f"✅ Found {len(messages)} unread messages")
+            output = (f"To: {message.recipient}, From: {message.sender}, "
+                      f"Subject: {message.subject}, Date: {str(message.date)}, "
+                      f"Preview: {message.snippet}")
+            top_ten.append(output)
+        elif message.plain:
+            output = (f"To: {message.recipient}, From: {message.sender}, "
+                      f"Subject: {message.subject}, Date: {str(message.date)} "
+                      f"Message Body: {message.plain}")
+            top_ten.append(output)
+    output = f"Found {len(messages)} unread messages when searching for {query}! Here's the 10 most recent:\n" + "\n".join(top_ten)
+    print(output)
+    return output
 
+@timeout(10)
 def search_entire_inbox(query):
-    """
-    Searches all messages in your Gmail inbox based on a query.
-
-    Args:
-        query (str): Search query for all messages.
-
-    Returns:
-        None
-    """
     messages = gmail.get_messages(query=query)
-    for message in messages:
-        print("To: " + message.recipient)
-        print("From: " + message.sender)
-        print("Subject: " + message.subject)
-        print("Date: " + str(message.date))
+    top_ten = []
+    if len(messages) == 0:
+        output = f"No messages found when searching for {query} in the entire inbox!"
+        print(output)
+        return output
+    for message in messages[:10]:
         if message.snippet:
-            print("Preview: " + message.snippet)
-        if message.plain:
-            print("Message Body: " + message.plain)
-    print(f"✅ Found {len(messages)} total messages")
+            output = (f"To: {message.recipient}, From: {message.sender}, "
+                      f"Subject: {message.subject}, Date: {str(message.date)}, "
+                      f"Preview: {message.snippet}")
+            top_ten.append(output)
+        elif message.plain:
+            output = (f"To: {message.recipient}, From: {message.sender}, "
+                      f"Subject: {message.subject}, Date: {str(message.date)} "
+                      f"Message Body: {message.plain}")
+            top_ten.append(output)
+    output = f"Found {len(messages)} total messages when searching for {query}! Here's the 10 most recent:\n" + "\n".join(top_ten)
+    print(output)
+    return output
 
 def llm_edit_gmail(prompt):
-    """
-    Interacts with the LLM to process the prompt and perform email actions using the available functions.
-
-    Args:
-        prompt (str): User prompt or instruction.
-
-    Returns:
-        None
-    """
     messages = [
         {
             "role": "system",
-            "content": "You are an email assistant. Use the available functions to manage email messages: send_message, search_sent_inbox, search_unread_inbox, search_entire_inbox.",
+            "content": f'''You are an email assistant. THIS IS VERY IMPORTANT, the current datetime is {datetime.now()}. Use the available functions to manage email messages: send_message, search_sent_inbox, search_unread_inbox, search_entire_inbox.
+            For context, this is the past email history: {search_mail_history(prompt)}''',
         },
         {
             "role": "user",
@@ -212,26 +228,31 @@ def llm_edit_gmail(prompt):
 
     response_message = response.choices[0].message
     tool_calls = response_message.tool_calls
+    if tool_calls:
+        for tool_call in tool_calls:
+            function_name = tool_call.function.name
+            function_args = json.loads(tool_call.function.arguments)
+            if function_name == "send_message":
+                to = function_args.get("to")
+                subject = function_args.get("subject")
+                msg_html = function_args.get("msg_html", "")
+                msg_plain = function_args.get("msg_plain", "")
+                return send_message(to, subject, msg_html, msg_plain)
+            
+            elif function_name == "search_sent_inbox":
+                query = function_args.get("query")
+                return search_sent_inbox(query)
+            
+            elif function_name == "search_unread_inbox":
+                query = function_args.get("query")
+                return search_unread_inbox(query)
 
-    for tool_call in tool_calls:
-        function_name = tool_call.function.name
-        function_args = json.loads(tool_call.function.arguments)
-        if function_name == "send_message":
-            to = function_args.get("to")
-            subject = function_args.get("subject")
-            msg_html = function_args.get("msg_html", "")
-            msg_plain = function_args.get("msg_plain", "")
-            send_message(to, subject, msg_html, msg_plain)
-        elif function_name == "search_sent_inbox":
-            query = function_args.get("query")
-            search_sent_inbox(query)
-        elif function_name == "search_unread_inbox":
-            query = function_args.get("query")
-            search_unread_inbox(query)
-        elif function_name == "search_entire_inbox":
-            query = function_args.get("query")
-            search_entire_inbox(query)
-    return
+            elif function_name == "search_entire_inbox":
+                query = function_args.get("query")
+                return search_entire_inbox(query)
+            
+    else:
+        return "No tool calls found"
 
 if __name__ == "__main__":
-    llm_edit_gmail("show all emails sent to shivumpandove@gmail.com")
+    llm_edit_gmail("Search for all messages in the inbox with the query 'quora'")
