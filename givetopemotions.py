@@ -20,7 +20,7 @@ async def main():
     async with client.expression_measurement.stream.connect(options=stream_options) as socket:
         for sample in samples:
             result = await socket.send_text(sample)
-            print(result.language.predictions[0]['emotions'])
+            print(result.language.predictions[0].emotions)
 
 if __name__ == "__main__":
     asyncio.run(main())
