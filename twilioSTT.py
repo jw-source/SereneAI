@@ -1,11 +1,12 @@
-#measure emotion to produce metrics
-#speech to text transcription
 import asyncio
 import os
 from dotenv import load_dotenv
 from hume.client import AsyncHumeClient
 from hume.empathic_voice.chat.socket_client import ChatConnectOptions
 from hume.empathic_voice.chat.types import SubscribeEvent
+from hume.expression_measurement.stream import Config
+from hume.expression_measurement.stream.socket_client import StreamConnectOptions
+from hume.expression_measurement.stream.types import StreamLanguage
 
 # Load API keys from .env file
 load_dotenv()
@@ -15,7 +16,7 @@ api_key = "3v4DChnAqtBLBnQzgD8VROM8nUmCLhhVYfw5V5EWXVrlP1ub"
 secret_key = "EJ3k24PMSK6jmld35F6ULK2vC0hj1xlAfVufPOmZHiA0ebmsPj0wJjdtrb9uY2tN"
 config_id = "a8a2528b-020b-46ca-bddf-59cc2595af39"  # Config ID for your ASR model
 
-# Class to manage WebSocket connection
+# Class to manage WebSocket connection for speech-to-text transcription
 class WebSocketInterface:
     def __init__(self):
         self.transcription_text = ""  # Stores the transcribed text
@@ -29,6 +30,19 @@ class WebSocketInterface:
         if hasattr(message, 'transcription'):
             self.transcription_text = message.transcription
             print(f"Transcription received: {self.transcription_text}")
+            # Now that we have transcription, pass it to emotion analysis
+            asyncio.create_task(self.analyze_emotions(self.transcription_text))
+
+    async def analyze_emotions(self, transcription):
+        # Initialize the Hume client for emotion analysis
+        client = AsyncHumeClient(api_key=api_key)
+        model_config = Config(language=StreamLanguage())
+        stream_options = StreamConnectOptions(config=model_config)
+        
+        async with client.expression_measurement.stream.connect(options=stream_options) as socket:
+            result = await socket.send_text(transcription)
+            emotions = result.language.predictions[0]['emotions']
+            print(f"Emotion analysis result: {emotions}")
 
     # Called when WebSocket closes
     def on_close(self):
@@ -38,9 +52,9 @@ class WebSocketInterface:
     def on_error(self, error):
         print(f"Error occurred: {error}")
 
-# Main function to connect to Hume and transcribe audio
+# Main function to connect to Hume for both transcription and emotion analysis
 async def main():
-    # Initialize the Hume client
+    # Initialize the Hume client for transcription (ASR)
     client = AsyncHumeClient(api_key=api_key)
 
     # Set WebSocket connection options
@@ -49,7 +63,7 @@ async def main():
     # Create WebSocket interface instance
     websocket_interface = WebSocketInterface()
 
-    # Establish WebSocket connection with Hume API
+    # Establish WebSocket connection with Hume API for transcription
     async with client.empathic_voice.chat.connect_with_callbacks(
         options=options,
         on_open=websocket_interface.on_open,
@@ -59,19 +73,9 @@ async def main():
     ) as socket:
         print("WebSocket connected. Listening for transcriptions...")
 
-        # Keep the connection alive for 30 seconds (adjust as needed)
-        await asyncio.sleep(30)
+        # Keep the connection alive (adjust as needed)
+        await asyncio.sleep(60)
 
-    # Print the final transcription
-    print(f"Final Transcription: {websocket_interface.transcription_text}")
-
-# Run the WebSocket transcription
-asyncio.run(main())
-
-#twiliooutgoing
-#need to STT this 
-#emotion analysis raw audio + emotion analysis STT produce weighted average
-
-
-
-
+# Run the WebSocket transcription and emotion analysis
+if __name__ == "__main__":
+    asyncio.run(main())
