@@ -5,7 +5,8 @@ from twilio.rest import Client
 # Set environment variables for your credentials
 # Read more at http://twil.io/secure
 
-#input account_sid and auth_token from API keys
+account_sid = "AC08a26500ef75d1132934ea016a37c8bf"
+auth_token = "1df2cefb568f962243a611877c20e1eb"
 client = Client(account_sid, auth_token)
 
 call = client.calls.create(
