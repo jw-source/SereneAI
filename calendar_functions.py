@@ -6,6 +6,7 @@ from groq import Groq
 import json
 from dotenv import load_dotenv
 import os
+from chroma import search_calendar_history
 
 load_dotenv()
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
@@ -13,17 +14,6 @@ model = 'llama3-groq-70b-8192-tool-use-preview'
 calendar = gc(credentials_path='./auth/cyprien_credentials.json')
 
 def list_events(query, time_min, time_max):
-    """
-    Retrieves relevant events from the Google Calendar and returns them as a list
-
-    Args:
-        query (str): Search text to filter events.
-        time_min (str): Start date and time in ISO format.
-        time_max (str): End date and time in ISO format.
-
-    Returns:
-        list: List of event information.
-    """
     events = []
     if time_min is not None and time_max is not None:
         time_min = datetime.fromisoformat(time_min)
@@ -45,53 +35,32 @@ def list_events(query, time_min, time_max):
             for event in calendar.get_events():
                 info = f"ID: {event.id}, Title: {event}"
                 events.append(info)
-    print("✅ Events listed")
-    return events
+    output = f"{len(events)} events found! " + "\n".join(events)
+    print(output)
+    return output
 
 def create_event(title, start, end):
-    """
-    Creates a new event in the Google Calendar.
-
-    Args:
-        title (str): Title of the event.
-        start (str): Start date and time in ISO format.
-        end (str): End date and time in ISO format.
-
-    Returns:
-        str: Confirmation message.
-    """
-    try:
-        start = datetime.fromisoformat(start)
-        end = datetime.fromisoformat(end)
-        new_event = Event(title, start=start, end=end)
-        calendar.add_event(new_event)
-        print("✅ New event added")
-        return
-    except Exception as e:
-        print(f"❌ Failed to add event: {str(e)}")
-        return
+    start = datetime.fromisoformat(start)
+    end = datetime.fromisoformat(end)
+    new_event = Event(title, start=start, end=end)
+    calendar.add_event(new_event)
+    output = "New event added! " + f"Title: {title}, Start: {start}, End: {end}"
+    print(output)
+    return output
 
 def delete_event(event_id):
-    """
-    Deletes an event from the Google Calendar by its ID.
-
-    Args:
-        event_id (str): ID of the event to delete.
-
-    Returns:
-        str: Confirmation message.
-    """
-    try:
-        calendar.delete_event(event_id)
-        print("✅ Event has been deleted.")
-    except Exception as e:
-        print(f"❌ Failed to delete event: {str(e)}")
+    calendar.delete_event(event_id)
+    output = f"Event with ID {event_id} deleted!"
+    print(output)
+    return output
 
 def llm_edit_calendar(prompt):
+    current_cal = list_events(None, None, None)
     messages = [
         {
             "role": "system",
-            "content": "You are a calendar assistant. Use the available functions to manage calendar events: create_event, delete_event, list_events.",
+            "content": f'''You are a calendar assistant. THIS IS VERY IMPORTANT, the current datetime is {datetime.now()}. Use the available functions to manage calendar events: create_event, delete_event, list_events.
+            For context, this is the current calendar state: {current_cal}. This is the past calendar history: {search_calendar_history(prompt)}''',
         },
         {
             "role": "user",
@@ -178,6 +147,9 @@ def llm_edit_calendar(prompt):
     ) 
     response_message = response.choices[0].message
     tool_calls = response_message.tool_calls
+    if tool_calls is None:
+        print("No tool calls found")
+        return
     for tool_call in tool_calls:
         function_name = tool_call.function.name
         function_args = json.loads(tool_call.function.arguments)
@@ -194,7 +166,7 @@ def llm_edit_calendar(prompt):
             time_min = function_args.get("time_min")
             time_max = function_args.get("time_max")
             list_events(query, time_min, time_max)
-    return
+    return "No tool calls found"
 
 if __name__ == "__main__":
-    llm_edit_calendar("show all events")
+    llm_edit_calendar("can you delete my burger king event")
