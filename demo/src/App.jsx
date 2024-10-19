@@ -1,18 +1,22 @@
 import { useEffect, useState } from "react";
-import { BrowserRouter as Router, Route, Routes, Link } from "react-router-dom";
 
 import ActiveCallDetail from "./components/ActiveCallDetail";
 import Button from "./components/base/Button";
 import Vapi from "@vapi-ai/web";
 import { isPublicKeyMissingError } from "./utils";
-import TrendsPage from "./components/TrendsPage"; // Import the new page
 
 // Put your Vapi Public Key below.
-const vapi = new Vapi("ee2a19c3-f4a4-4ed7-a600-010281844d16");
+const vapi = new Vapi("def07e68-c687-4d95-80dd-a171cc01d29c");
 
 const App = () => {
   const [connecting, setConnecting] = useState(false);
   const [connected, setConnected] = useState(false);
+
+
+  const [userTranscript, setUserTranscript] = useState("");
+  const [assistantTranscript, setAssistantTranscript] = useState("");
+  
+  const [showTranscripts, setShowTranscripts] = useState(false); // State to manage transcript visibility
 
   const [assistantIsSpeaking, setAssistantIsSpeaking] = useState(false);
   const [volumeLevel, setVolumeLevel] = useState(0);
@@ -26,6 +30,7 @@ const App = () => {
       setConnected(true);
 
       setShowPublicKeyInvalidMessage(false);
+      setShowTranscripts(false);
     });
 
     vapi.on("call-end", () => {
@@ -33,6 +38,7 @@ const App = () => {
       setConnected(false);
 
       setShowPublicKeyInvalidMessage(false);
+      setShowTranscripts(true);
     });
 
     vapi.on("speech-start", () => {
@@ -47,6 +53,15 @@ const App = () => {
       setVolumeLevel(level);
     });
 
+    vapi.on('message', (message) => {
+      console.log("Received message:", message);
+      if (message.role === 'user') {
+          setUserTranscript((prev) => prev + message.transcript + "\n");
+      } else if (message.role === 'assistant') {
+          setAssistantTranscript((prev) => prev + message.transcript + "\n");
+      }
+  });
+  
     vapi.on("error", (error) => {
       console.error(error);
 
@@ -63,49 +78,47 @@ const App = () => {
   // call start handler
   const startCallInline = () => {
     setConnecting(true);
-    vapi.start(assistantOptions);
+    vapi.start("5983bd53-7f57-4364-a161-ca212bf2c55d");
   };
   const endCall = () => {
+    console.log(userTranscript)
+    console.log(assistantTranscript)
     vapi.stop();
   };
 
   return (
-    <Router>
-      <div
-        style={{
-          display: "flex",
-          width: "100vw",
-          height: "100vh",
-          justifyContent: "center",
-          alignItems: "center",
-        }}
-      >
-        <Routes>
-          <Route
-            path="/"
-            element={
-              !connected ? (
-                <Button
-                  label="SereneAI"
-                  onClick={startCallInline}
-                  isLoading={connecting}
-                />
-              ) : (
-                <ActiveCallDetail
-                  assistantIsSpeaking={assistantIsSpeaking}
-                  volumeLevel={volumeLevel}
-                  onEndCallClick={endCall}
-                />
-              )
-            }
-          />
-          <Route path="/trends" element={<TrendsPage />} />
-        </Routes>
+    <div
+      style={{
+        display: "flex",
+        width: "100vw",
+        height: "100vh",
+        justifyContent: "center",
+        alignItems: "center",
+      }}
+    >
+      {!connected ? (
+        <Button
+          label="SereneAI"
+          onClick={startCallInline}
+          isLoading={connecting}
+        />
+      ) : ( 
+        <ActiveCallDetail
+          assistantIsSpeaking={assistantIsSpeaking}
+          volumeLevel={volumeLevel}
+          onEndCallClick={endCall}
+        /> 
 
-        {showPublicKeyInvalidMessage ? <PleaseSetYourPublicKeyMessage /> : null}
-        <ReturnToDocsLink />
-      </div>
-    </Router>
+      
+      )}
+
+
+ 
+      
+
+      {showPublicKeyInvalidMessage ? <PleaseSetYourPublicKeyMessage /> : null}
+      <ReturnToDocsLink />
+    </div>
   );
 };
 
@@ -127,7 +140,7 @@ const assistantOptions = {
     messages: [
       {
         role: "system",
-        content: `You are a therapist, in charge of helping the user navigate their struggles and doubts. Please do your best to help the user and hear them out. Ask them corresponding follow-up questions.`,
+        content: `You are a therapist, in charge of helping the user navigate there struggles and doubts. Please do your best to help out the user and hear them out. Ask them corresponding follow up quesitons`,
       },
     ],
   },
@@ -172,8 +185,10 @@ const PleaseSetYourPublicKeyMessage = () => {
 
 const ReturnToDocsLink = () => {
   return (
-    <Link
-      to="/trends"
+    <a
+      href="https://docs.vapi.ai"
+      target="_blank"
+      rel="noopener noreferrer"
       style={{
         position: "fixed",
         top: "25px",
@@ -186,7 +201,7 @@ const ReturnToDocsLink = () => {
       }}
     >
       Trends
-    </Link>
+    </a>
   );
 };
 
