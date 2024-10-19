@@ -18,7 +18,17 @@ call = client.calls.create(
 print(call.sid)
 
 
+#twilio real time audio stream into websocket
+from twilio.twiml.voice_response import VoiceResponse, Say, Start, Stream
+#https://www.twilio.com/docs/voice/twiml/stream
 
+response = VoiceResponse()
+start = Start()
+start.stream(name='user speech', url='')
+response.append(start)
+response.say('The stream has started.')
+
+print(response)
 
 
 #hume ai presentation
