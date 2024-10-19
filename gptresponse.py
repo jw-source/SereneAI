@@ -30,6 +30,6 @@ def generate_therapist_response(text, emotions):
         return f"Error: {str(e)}"
 
 if __name__ == "__main__":
-    therapist_response = generate_therapist_response("hello im feeling down today", "sad ")
+    therapist_response = generate_therapist_response(text, top_n_emotions)
     print(therapist_response)
     
