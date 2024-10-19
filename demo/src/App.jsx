@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
+import { BrowserRouter as Router, Route, Routes, Link } from "react-router-dom";
 
 import ActiveCallDetail from "./components/ActiveCallDetail";
 import Button from "./components/base/Button";
 import Vapi from "@vapi-ai/web";
 import { isPublicKeyMissingError } from "./utils";
+import TrendsPage from "./components/TrendsPage"; // Import the new page
 
 // Put your Vapi Public Key below.
 const vapi = new Vapi("ee2a19c3-f4a4-4ed7-a600-010281844d16");
@@ -68,38 +70,42 @@ const App = () => {
   };
 
   return (
-    <div
-      style={{
-        display: "flex",
-        width: "100vw",
-        height: "100vh",
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-      {!connected ? (
-        <Button
-          label="SereneAI"
-          onClick={startCallInline}
-          isLoading={connecting}
-        />
-      ) : ( 
-        <ActiveCallDetail
-          assistantIsSpeaking={assistantIsSpeaking}
-          volumeLevel={volumeLevel}
-          onEndCallClick={endCall}
-        /> 
+    <Router>
+      <div
+        style={{
+          display: "flex",
+          width: "100vw",
+          height: "100vh",
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <Routes>
+          <Route
+            path="/"
+            element={
+              !connected ? (
+                <Button
+                  label="SereneAI"
+                  onClick={startCallInline}
+                  isLoading={connecting}
+                />
+              ) : (
+                <ActiveCallDetail
+                  assistantIsSpeaking={assistantIsSpeaking}
+                  volumeLevel={volumeLevel}
+                  onEndCallClick={endCall}
+                />
+              )
+            }
+          />
+          <Route path="/trends" element={<TrendsPage />} />
+        </Routes>
 
-      
-      )}
-
-
- 
-      
-
-      {showPublicKeyInvalidMessage ? <PleaseSetYourPublicKeyMessage /> : null}
-      <ReturnToDocsLink />
-    </div>
+        {showPublicKeyInvalidMessage ? <PleaseSetYourPublicKeyMessage /> : null}
+        <ReturnToDocsLink />
+      </div>
+    </Router>
   );
 };
 
@@ -121,7 +127,7 @@ const assistantOptions = {
     messages: [
       {
         role: "system",
-        content: `You are a therapist, in charge of helping the user navigate there struggles and doubts. Please do your best to help out the user and hear them out. Ask them corresponding follow up quesitons`,
+        content: `You are a therapist, in charge of helping the user navigate their struggles and doubts. Please do your best to help the user and hear them out. Ask them corresponding follow-up questions.`,
       },
     ],
   },
@@ -166,10 +172,8 @@ const PleaseSetYourPublicKeyMessage = () => {
 
 const ReturnToDocsLink = () => {
   return (
-    <a
-      href="https://docs.vapi.ai"
-      target="_blank"
-      rel="noopener noreferrer"
+    <Link
+      to="/trends"
       style={{
         position: "fixed",
         top: "25px",
@@ -182,7 +186,7 @@ const ReturnToDocsLink = () => {
       }}
     >
       Trends
-    </a>
+    </Link>
   );
 };
 
