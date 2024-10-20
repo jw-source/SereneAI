@@ -1,6 +1,8 @@
 # Serene AI - Personal Wellness Coach
 
-![logo](https://github.com/user-attachments/assets/dc033bd2-1f7e-4d27-803a-0d48d5cf1707) 
+<div align="center">
+  <img src="https://github.com/user-attachments/assets/dc033bd2-1f7e-4d27-803a-0d48d5cf1707" alt="logo" width="200"/>
+</div>
 
 Serene AI is a voice-to-voice web application designed to help users manage their mental well-being and productivity through personalized interactions. Serene listens to users' thoughts, emotions, and concerns, and responds with thoughtful advice and actions to reduce stress, manage schedules, and track emotional trends over time.
 
@@ -33,6 +35,7 @@ Developed for CalHacks 2024 at UC Berkeley, Serene AI integrates a custom AI mod
 - **Custom LLM**: Built using Groq and OpenAI for processing user input and generating responses.
 - **Hume AI**: For advanced emotional sentiment analysis.
 - **ChromaDB**: For storing conversation history, creating a knowledge base, and holding sentiment data.
+- **Multi-Agent Functionality**: Allows us to control and edit your calendar or inbox directly through text and voice
 
 ## Setup and Installation
 
@@ -118,4 +121,5 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - **VAPI API** for enabling seamless voice interaction.
 - **Hume AI** for emotional sentiment analysis.
 - **Google Cloud** for Calendar and Gmail API services.
-- **OpenAI & Groq** for powering the LLM behind Serene AI.
+- **OpenAI & Groq** for powering the LLMs and embedding models behind Serene AI.
+- **ChromaDB** for enabling seamless memory storage and creation
