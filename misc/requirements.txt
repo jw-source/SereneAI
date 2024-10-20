@@ -1,5 +1,0 @@
-gcsa
-beautiful-date
-simplegmail
-python-dotenv
-groq
