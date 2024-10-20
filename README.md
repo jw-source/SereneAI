@@ -1,6 +1,6 @@
 # Serene AI - Personal Wellness Coach
 
-<img src="https://github.com/user-attachments/assets/dc033bd2-1f7e-4d27-803a-0d48d5cf1707" alt="logo" width="400" />
+<img src="https://github.com/user-attachments/assets/dc033bd2-1f7e-4d27-803a-0d48d5cf1707" alt="logo" width="700" />
 
 
 
