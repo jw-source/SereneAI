@@ -32,7 +32,7 @@ Developed for CalHacks 2024 at UC Berkeley, Serene AI integrates a custom AI mod
 ### AI & Data:
 - **Custom LLM**: Built using Groq and OpenAI for processing user input and generating responses.
 - **Hume AI**: For advanced emotional sentiment analysis.
-- **ChromaDB**: For storing conversation history and sentiment data.
+- **ChromaDB**: For storing conversation history, creating a knowledge base, and holding sentiment data.
 
 ## Setup and Installation
 
