@@ -1,5 +1,10 @@
 # Serene AI - Personal Wellness Coach
 
+![logo](https://github.com/user-attachments/assets/dc033bd2-1f7e-4d27-803a-0d48d5cf1707)
+
+
+
+
 Serene AI is a voice-to-voice web application designed to help users manage their mental well-being and productivity through personalized interactions. Serene listens to users' thoughts, emotions, and concerns, and responds with thoughtful advice and actions to reduce stress, manage schedules, and track emotional trends over time.
 
 Developed for CalHacks 2024 at UC Berkeley, Serene AI integrates a custom AI model with emotional sentiment tracking and productivity management tools.
